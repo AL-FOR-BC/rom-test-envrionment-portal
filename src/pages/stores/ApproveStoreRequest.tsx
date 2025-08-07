@@ -7,6 +7,7 @@ import Lines from "../../Components/ui/Lines/Lines";
 import { apiLocation, apiDimensionValue } from "../../services/CommonServices";
 import { apiGetStoreRequest } from "../../services/StoreRequestServices";
 import { getErrorMessage } from "../../utils/common";
+import { environmentType } from "../../configs/navigation.config/app.config";
 
 function ApproveStoreRequest() {
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ function ApproveStoreRequest() {
         id: "requestorName",
       },
       {
-        label: "Project Code",
+        label: environmentType === "HRP" ? "Department" : "Project Code",
         type: "text",
         value: selectedDimension,
         disabled: true,
@@ -134,10 +135,7 @@ function ApproveStoreRequest() {
         // const filter = `$expand=purchaseRequisitionLines&$filter=no eq '${documentNo}'`;
 
         const filter = `$expand=storeRequestline&$filter=no eq '${documentNo}'`;
-        const response = await apiGetStoreRequest(
-          companyId,
-          filter
-        );
+        const response = await apiGetStoreRequest(companyId, filter);
         console.log("response:", response);
         const data = response.data.value[0];
 

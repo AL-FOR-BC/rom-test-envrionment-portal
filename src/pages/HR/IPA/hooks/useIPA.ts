@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../../../store/hook";
 import { DocumentTypeMode } from "../../../../@types/documents/base.types";
-import { apiIPALInes, ipaService } from "../../../../services/IpaSerivces";
+import { apiIPALInes } from "../../../../services/IpaSerivces";
+import { ipaService } from "../../../../services/IpaSerivces";
 import { options } from "../../../../@types/common.dto";
 import {
   IPAFormData,
@@ -277,7 +278,7 @@ export const useIPA = ({
             }
           : { value: "", label: "Select" },
         id: "appraisalPeriod",
-        disabled: false,
+        disabled: isFieldDisabled,
         onChange: (e: options) => {
           handleInputChange("appraisalPeriod", e.value);
         },
@@ -317,18 +318,7 @@ export const useIPA = ({
           },
           required: true,
         },
-        {
-          label: "Key Performance Indicator(s)",
-          type: "textarea",
-          rows: 5,
-          value: lineFormData.keyPerformanceIndicators || "",
-          id: "keyPerformanceIndicators",
-          disabled: isFieldDisabled,
-          onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
-            handleLineFieldUpdate("keyPerformanceIndicators", e.target.value);
-          },
-          required: true,
-        },
+        
         {
           label: "Measures/Deliverables",
           type: "textarea",
@@ -338,6 +328,18 @@ export const useIPA = ({
           disabled: isFieldDisabled,
           onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
             handleLineFieldUpdate("deliverables", e.target.value);
+          },
+          required: true,
+        },
+        {
+          label: "Key Performance Indicator(s)",
+          type: "textarea",
+          rows: 5,
+          value: lineFormData.keyPerformanceIndicators || "",
+          id: "keyPerformanceIndicators",
+          disabled: isFieldDisabled,
+          onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+            handleLineFieldUpdate("keyPerformanceIndicators", e.target.value);
           },
           required: true,
         },
@@ -548,6 +550,30 @@ export const useIPA = ({
     }
   };
 
+  const convertToPerformanceAppraisal = async () => {
+    setState((prev) => ({ ...prev, isLoading: true }));
+    try {
+      const response = await ipaService.convertToPerformanceAppraisal(
+        companyId,
+        {
+          no: formData.no || "",
+        }
+      );
+      if (response.status === 200) {
+        console.log("response", response);
+        toast.success("Performance appraisal converted successfully");
+        navigate(`/performance-appraisal/`);
+      }
+    } catch (error) {
+      console.error("Full error:", error);
+      toast.error(
+        `Error converting to performance appraisal: ${getErrorMessage(error)}`
+      );
+    } finally {
+      setState((prev) => ({ ...prev, isLoading: false }));
+    }
+  };
+
   return {
     state,
     formData,
@@ -567,5 +593,6 @@ export const useIPA = ({
     updateIPALines,
     sendIPAForApproval,
     cancelIPAApprovalRequest,
+    convertToPerformanceAppraisal,
   };
 };

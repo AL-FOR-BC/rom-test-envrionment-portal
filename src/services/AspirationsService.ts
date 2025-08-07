@@ -38,3 +38,13 @@ export async function createAspirations(
     data,
   });
 }
+
+export async function deleteAspirations(
+  companyId: string,
+  systemId: string
+): Promise<any> {
+  return BcApiService.fetchData<any>({
+    url: `/api/hrpsolutions/hrmis/v2.0/aspirations(${systemId})?Company=${companyId}`,
+    method: "DELETE",
+  });
+}

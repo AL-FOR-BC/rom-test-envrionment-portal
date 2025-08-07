@@ -1,4 +1,4 @@
-import {  useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import TableMui from "../../../Components/ui/Table/TableMui";
 import { usePA } from "./hooks/usePA";
 import { PA } from "../../../@types/pa.dto";
@@ -63,8 +63,14 @@ function PaReview() {
           <>
             {cell === "Appraisee Rating" ? (
               <span className="badge bg-info">Appraisee Rating</span>
-            ) : (
+            ) : cell === "Appraiser Rating" ? (
               <span className="badge bg-warning">Appraiser Rating</span>
+            ) : cell === "Head of Department Review" ? (
+              <span className="badge bg-primary">
+                Head of Department Review
+              </span>
+            ) : (
+              <span className="badge bg-secondary">{cell}</span>
             )}
           </>
         );
@@ -101,7 +107,10 @@ function PaReview() {
         // For now, showing all PAs (you can adjust the filter logic as needed)
         const filteredResult = result.filter(
           (item) =>
-            item.appraiser === employeeNo && item.stage === "Appraiser Rating"
+            (item.appraiser === employeeNo &&
+              item.stage === "Appraiser Rating") ||
+            (item.headOfDepartment === employeeNo &&
+              item.stage === "Head of Department Review")
         );
         console.log(filteredResult);
         setData(filteredResult || []);

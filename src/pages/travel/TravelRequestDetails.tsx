@@ -41,6 +41,7 @@ import { handleSendForApproval } from "../../actions/actions";
 import { options } from "../../@types/common.dto";
 import { split } from "lodash";
 import HeaderMui from "../../Components/ui/Header/HeaderMui";
+import { environmentType } from "../../configs/navigation.config/app.config";
 
 function TravelRequestDetails() {
   const { id } = useParams();
@@ -152,7 +153,7 @@ function TravelRequestDetails() {
 
     [
       {
-        label: "Project Code",
+        label: environmentType === "HRP" ? "Department" : "Project Code",
         type: "select",
         disabled: status === "Open" ? false : true,
         options: dimensionValues,
@@ -451,12 +452,12 @@ function TravelRequestDetails() {
           },
           // {
           //   dataField: "ShortcutDimCode1",
-          //   text: "Project Code",
+          //   text: environmentType === "HRP" ? "Department" : "Project Code",
           //   sort: true,
           // },
           // {
           //   dataField: "ShortcutDimCode2",
-          //   text: "Donor Code",
+          //   text: environmentType === "HRP" ? "Cost Center" : "Donor Code",
           //   sort: true,
           // },
           {
@@ -527,12 +528,12 @@ function TravelRequestDetails() {
           },
           // {
           //   dataField: "ShortcutDimCode1",
-          //   text: "Project Code",
+          //   text: environmentType === "HRP" ? "Department" : "Project Code",
           //   sort: true,
           // },
           // {
           //   dataField: "ShortcutDimCode2",
-          //   text: "Donor Code",
+          //   text: environmentType === "HRP" ? "Cost Center" : "Donor Code",
           //   sort: true,
           // },
           {
@@ -851,6 +852,7 @@ function TravelRequestDetails() {
         workPlanEntryNo: split(selectedWorkPlanLine[0].value, "::")[0],
         documentNo: requestNo,
         description: lineDescription,
+        workPlanNo: split(selectedWorkPlan[0].value, "::")[0],
       };
       const res = await apiCreateTravelRequestsLines(companyId, data);
       console.log(res.data);
@@ -1047,7 +1049,10 @@ function TravelRequestDetails() {
       { value: selectedSubCategory[0]?.value, name: "Payment Sub Category" },
       { value: budgetCode, name: "Budget Code" },
       { value: selectedEmployee[0]?.value, name: "Employee" },
-      { value: selectedDimension[0]?.value, name: "Project Code" },
+      {
+        value: selectedDimension[0]?.value,
+        name: environmentType === "HRP" ? "Department" : "Project Code",
+      },
       { value: selectedWorkPlan[0]?.value, name: "Work Plan" },
     ];
 

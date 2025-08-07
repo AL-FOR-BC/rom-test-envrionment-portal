@@ -38,3 +38,16 @@ export async function createCareerMoveOptions(
     data,
   });
 }
+
+export async function deleteCareerMoveOptions(
+  companyId: string,
+  systemId: string
+): Promise<any> {
+  return BcApiService.fetchData<any>({
+    url: `/api/hrpsolutions/hrmis/v2.0/careerMoveOptions(${systemId})?Company=${companyId}`,
+    method: "DELETE",
+    headers: {
+      "If-Match": "*",
+    },
+  });
+}

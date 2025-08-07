@@ -46,6 +46,7 @@ import {
 } from "../../store/slices/Requisitions";
 import { handleSendForApproval } from "../../actions/actions";
 import HeaderMui from "../../Components/ui/Header/HeaderMui";
+import { environmentType } from "../../configs/navigation.config/app.config";
 
 function PurchaseRequisitionDetail() {
   const navigate = useNavigate();
@@ -139,7 +140,7 @@ function PurchaseRequisitionDetail() {
         id: "empName",
       },
       {
-        label: "Project Code",
+        label: environmentType === "HRP" ? "Department" : "Project Code",
         type: "select",
         value: selectedDimension,
         disabled: status === "Open" ? false : true,
@@ -483,12 +484,12 @@ function PurchaseRequisitionDetail() {
           },
           {
             dataField: "ShortcutDimCode1",
-            text: "Project Code",
+            text: environmentType === "HRP" ? "Department" : "Project Code",
             sort: true,
           },
           {
             dataField: "ShortcutDimCode2",
-            text: "Donor Code",
+            text: environmentType === "HRP" ? "Cost Center" : "Donor Code",
             sort: true,
           },
           {
@@ -557,19 +558,19 @@ function PurchaseRequisitionDetail() {
           },
           {
             dataField: "ShortcutDimCode1",
-            text: "Project Code",
+            text: environmentType === "HRP" ? "Department" : "Project Code",
             sort: true,
           },
           {
             dataField: "ShortcutDimCode2",
-            text: "Donor Code",
+            text: environmentType === "HRP" ? "Cost Center" : "Donor Code",
             sort: true,
           },
           {
             dataField: "ShortcutDimCode4",
             text: "Activity Code",
             sort: true,
-          }
+          },
         ];
   const modalFields = [
     [

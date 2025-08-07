@@ -245,11 +245,11 @@ const appRoutes: Routes = [
     path: "/pa-details/:id",
     component: lazy(() => import("../../pages/HR/PA/PADetails.tsx")),
   },
-  {
-    key: "add-pa",
-    path: "/add-pa",
-    component: lazy(() => import("../../pages/HR/PA/AddPA.tsx")),
-  },
+  // {
+  //   key: "add-pa",
+  //   path: "/add-pa",
+  //   component: lazy(() => import("../../pages/HR/PA/AddPA.tsx")),
+  // },
   {
     key: "approve-pa",
     path: "/approve-pa/:documentNo",

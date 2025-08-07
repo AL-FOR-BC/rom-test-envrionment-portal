@@ -18,6 +18,7 @@ import { apiCreatePaymentRequisition } from "../../services/RequisitionServices"
 import { useNavigate } from "react-router-dom";
 import HeaderMui from "../../Components/ui/Header/HeaderMui";
 import { getErrorMessage } from "../../utils/common";
+import { environmentType } from "../../configs/navigation.config/app.config";
 
 function AddPaymentRequisition() {
   const { companyId } = useAppSelector((state) => state.auth.session);
@@ -150,7 +151,7 @@ function AddPaymentRequisition() {
         id: "empName",
       },
       {
-        label: "Project Code",
+        label: environmentType === "HRP" ? "Department" : "Project Code",
         type: "select",
         value: selectedDimension,
         disabled: false,

@@ -87,7 +87,7 @@ function App() {
   return (
     <Provider store={store}>
       <MsalProvider instance={pca}>
-        <BrowserRouter basename="/">
+        <BrowserRouter basename={environmentType === "HRP" ? "/" : "/rom"}>
           <IdleTimerContainer />
           <ToastContainer theme="colored" />
           <Layout />

@@ -28,6 +28,7 @@ const SectionHeader: React.FC<SectionHeaderProps> = ({
       boxShadow: "none",
       borderBottom: "1px solid #d3e2f7",
       minHeight: 56,
+      width: "100%",
     }}
   >
     <Typography

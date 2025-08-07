@@ -4,7 +4,7 @@ import {
   PartialIPALineFormData,
   PartialIPAFormData,
 } from "../@types/ipa.dto";
-import {  BaseApiService } from "./base/BaseApiService";
+import { BaseApiService } from "./base/BaseApiService";
 import BcApiService from "./BcApiServices";
 
 class IpaService extends BaseApiService {
@@ -71,6 +71,15 @@ class IpaService extends BaseApiService {
       data,
       type: "approval",
       customEndpoint: "HRMISActions_CancelIPAApprovalRequest",
+    });
+  }
+
+  async convertToPerformanceAppraisal(companyId: string, data: { no: string }) {
+    return this.create<{ no: string , systemId: string }>({
+      companyId,
+      data,
+      type: "approval",
+      customEndpoint: "HRMISActions_ConvertToPerformanceAppraisal",
     });
   }
 

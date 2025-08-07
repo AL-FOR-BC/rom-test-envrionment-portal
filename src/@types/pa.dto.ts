@@ -29,6 +29,7 @@ export interface PA {
   employeeNo: string;
   employeeName: string;
   appraiser: string;
+  headOfDepartment: string;
   departmentCode: string;
   postingDate: string;
   status: string;
@@ -36,29 +37,76 @@ export interface PA {
   appraisalCycle: string;
   performanceYear: number;
   appraisalType: string;
-  stage: "Performance Planning" | "Appraisee Rating" | "Appraiser Rating" | "Closed" | "Cancelled";
+  stage:
+    | "Performance Planning"
+    | "Appraisee Rating"
+    | "Appraiser Rating"
+    | "Head of Department Review"
+    | "Closed"
+    | "Cancelled";
   performanceAppraisalState: string;
   paLines: PALine[];
+  employeeComments?: string;
+  lineManagerComments?: string;
+  headOfDepartmentComments?: string;
+  hrActionPoint?: string;
 }
 
+// Form data interface for the PA document
 export interface PAFormData {
   no?: string;
   employeeNo: string;
   appraiser: string;
+  headOfDepartment: string;
   departmentCode: string;
   postingDate: string;
   status: string;
   appraisalPeriod: string;
+  appraisalCycle: string;
+  performanceYear: string;
   appraisalType: string;
-  stage: "Performance Planning" | "Appraisee Rating" | "Appraiser Rating" | "Closed" | "Cancelled";
+  stage:
+    | "Performance Planning"
+    | "Appraisee Rating"
+    | "Appraiser Rating"
+    | "Head of Department Review"
+    | "Closed"
+    | "Cancelled";
   performanceAppraisalState: string;
+  systemId?: string;
+  employeeComments?: string;
+  lineManagerComments?: string;
+  headOfDepartmentComments?: string;
+  hrActionPoint?: string;
+}
+
+// Form data interface for PA lines
+export interface PALineFormData {
+  jobObjective?: string;
+  keyPerformanceIndicator?: string;
+  initiative?: string;
+  measuresDeliverables?: string;
+  byWhichTargetDate?: string;
+  targetValue?: string;
+  actualValue?: string;
+  comments?: string;
+  systemId?: string;
+  lineNo?: number;
+  documentNo?: string;
+  limitingFactor?: string;
+  enhancedPerformance?: string;
+  appraiseeRating?: number;
+  appraiseeScore?: number;
+  appraiserRating?: number;
+  agreedScore?: number;
+  agreedActionsInterventions?: string;
 }
 
 export type PartialPAFormData = Partial<PAFormData>;
 
 export type PartialPALineFormData = Partial<PALineFormData>;
 
-// export
+// API Response types
 export interface PAResponse {
   "@odata.context": string;
   value: PA[];
@@ -90,51 +138,8 @@ export enum AppraisalType {
 export enum Stage {
   APPRAISEE_RATING = "Appraisee Rating",
   SUPERVISOR_RATING = "Supervisor Rating",
+  HEAD_OF_DEPARTMENT_REVIEW = "Head of Department Review",
   COMPLETED = "Completed",
-}
-
-// Form data interface for the PA document
-export interface PAFormData {
-  no?: string;
-  employeeNo: string;
-  appraiser: string;
-  departmentCode: string;
-  postingDate: string;
-  status: string;
-  appraisalPeriod: string;
-  appraisalCycle: string;
-  performanceYear: string;
-  appraisalType: string;
-  stage:
-    | "Performance Planning"
-    | "Appraisee Rating"
-    | "Appraiser Rating"
-    | "Closed"
-    | "Cancelled";
-  performanceAppraisalState: string;
-  systemId?: string;
-}
-
-// Form data interface for PA lines
-export interface PALineFormData {
-  jobObjective?: string;
-  keyPerformanceIndicator?: string;
-  initiative?: string;
-  measuresDeliverables?: string;
-  byWhichTargetDate?: string;
-  targetValue?: string;
-  actualValue?: string;
-  comments?: string;
-  systemId?: string;
-  lineNo?: number;
-  documentNo?: string;
-  limitingFactor?: string;
-  enhancedPerformance?: string;
-  appraiseeRating?: number;
-  appraiseeScore?: number;
-  appraiserRating?: number;
-  agreedScore?: number;
-  agreedActionsInterventions?: string;
 }
 
 // State interface for managing PA document state
@@ -176,3 +181,32 @@ export const initialPALineFormData: PALineFormData = {
   agreedScore: 0,
   agreedActionsInterventions: "",
 };
+
+// Peer Evaluation types
+export interface PeerEvaluation {
+  "@odata.etag": string;
+  systemId: string;
+  documentNo?: string;
+  attributeCode?: string;
+  keyEnablingAttribute?: string;
+  rating?: number;
+  comment?: string;
+  anySuggestion?: string;
+}
+
+export interface PeerEvaluationFormData {
+  documentNo?: string;
+  attributeCode?: string;
+  keyEnablingAttribute?: string;
+  rating?: number;
+  comment?: string;
+  anySuggestion?: string;
+}
+
+export type PartialPeerEvaluationFormData = Partial<PeerEvaluationFormData>;
+
+// Peer Evaluation Response
+export interface PeerEvaluationResponse {
+  "@odata.context": string;
+  value: PeerEvaluation[];
+}

@@ -38,6 +38,7 @@ export const usePA = ({
     no: "",
     employeeNo: employeeNo || "",
     appraiser: "",
+    headOfDepartment: "",
     departmentCode: "",
     postingDate: currentDate,
     status: "Open",
@@ -565,6 +566,7 @@ export const usePA = ({
       no: data.no,
       employeeNo: data.employeeNo,
       appraiser: data.appraiser,
+      headOfDepartment: data.headOfDepartment,
       departmentCode: data.departmentCode,
       postingDate: data.postingDate,
       status: data.status,
@@ -664,6 +666,49 @@ export const usePA = ({
     }
   };
 
+  const sendToHeadOfDepartment = async (systemId: string) => {
+    try {
+      if (!formData.no) {
+        toast.error("PA No is required");
+        return;
+      }
+      setState((prev) => ({ ...prev, isLoading: true }));
+      const response = await paService.sendToHeadOfDepartment(companyId, {
+        no: formData.no,
+      });
+      if (response.status === 200) {
+        toast.success("Sent to Head of Department successfully");
+        populateDocumentDetail(systemId);
+        setState((prev) => ({ ...prev, isLoading: false }));
+      }
+    } catch (error) {
+      toast.error(
+        `Error sending to Head of Department: ${getErrorMessage(error)}`
+      );
+    }
+  };
+
+  const sendBackToAppraisee = async (systemId: string) => {
+    try {
+      if (!formData.no) {
+        toast.error("PA No is required");
+        return;
+      }
+      setState((prev) => ({ ...prev, isLoading: true }));
+      const response = await paService.sendBackToAppraisee(companyId, {
+        no: formData.no,
+      });
+      if (response.status === 204) {
+        toast.success("Sent back to Appraisee successfully");
+        navigate("/performance-appraisal-review");
+        populateDocumentDetail(systemId);
+        setState((prev) => ({ ...prev, isLoading: false }));
+      }
+    } catch (error) {
+      toast.error(`Error sending back to Appraisee: ${getErrorMessage(error)}`);
+    }
+  };
+
   return {
     state,
     formData,
@@ -684,5 +729,9 @@ export const usePA = ({
     sendPAForApproval,
     cancelPAApprovalRequest,
     sendToAppraiser,
+    sendToHeadOfDepartment,
+    sendBackToAppraisee,
+    handleInputChange,
+    handleFieldUpdate,
   };
 };

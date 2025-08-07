@@ -71,6 +71,9 @@ interface HeaderMuiProps {
   handleDelete?: () => void;
   handleSendToAppraiser?: () => void;
   currentUser?: "Appraisee" | "Appraiser";
+  handleConvertToPerformanceAppraisal?: () => void;
+  handleSendToHeadOfDepartment?: () => void;
+  handleSendBackToAppraisee?: () => void;
 }
 
 const HeaderMui: React.FC<HeaderMuiProps> = (props) => {
@@ -104,6 +107,9 @@ const HeaderMui: React.FC<HeaderMuiProps> = (props) => {
     handleReopen,
     handleSendToAppraiser,
     currentUser,
+    handleConvertToPerformanceAppraisal,
+    handleSendToHeadOfDepartment,
+    handleSendBackToAppraisee,
   } = props;
   console.log("currentUser", props.currentUser);
   console.log("stage", props.stage);
@@ -165,7 +171,8 @@ const HeaderMui: React.FC<HeaderMuiProps> = (props) => {
                     </Button>
                     {documentType === "Performance Management" &&
                       stage === "Appraisee Rating" &&
-                      currentUser === "Appraisee" && (
+                      currentUser === "Appraisee" &&
+                      breadcrumbItem !== "Individual Performance Agreement" && (
                         <Button
                           color="primary"
                           className="btn btn-label"
@@ -179,6 +186,29 @@ const HeaderMui: React.FC<HeaderMuiProps> = (props) => {
                     {documentType === "Performance Management" &&
                       stage === "Appraiser Rating" &&
                       currentUser === "Appraiser" && (
+                        <>
+                          <Button
+                            color="warning"
+                            className="btn btn-label"
+                            onClick={handleSendBackToAppraisee}
+                          >
+                            <ArrowBackIcon className="label-icon" />
+                            Send back to Appraisee
+                          </Button>
+                          <Button
+                            color="primary"
+                            className="btn btn-label"
+                            onClick={handleSendToHeadOfDepartment}
+                          >
+                            <SendIcon className="label-icon" />
+                            Send To Head of Department
+                          </Button>
+                        </>
+                      )}
+                    {documentType === "Performance Management" &&
+                      title === "IPA Details" &&
+                      stage === "Appraisee Rating" &&
+                      currentUser === "Appraisee" && (
                         <Button
                           color="primary"
                           className="btn btn-label"
@@ -338,12 +368,13 @@ const HeaderMui: React.FC<HeaderMuiProps> = (props) => {
                       Back
                     </Button>
                     {documentType === "Performance Management" &&
-                      stage === "Individual Performance Agreement" && (
+                      stage === "Appraisee Rating" &&
+                      breadcrumbItem === "Individual Performance Agreement" && (
                         <>
                           <Button
                             color="primary"
                             className="btn btn-label"
-                            onClick={handleSubmit}
+                            onClick={handleConvertToPerformanceAppraisal}
                           >
                             <i className="label-icon">
                               <ConvertIcon className="label-icon" />

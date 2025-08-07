@@ -38,3 +38,16 @@ export async function createLanguageSkills(
     data,
   });
 }
+
+export async function deleteLanguageSkills(
+  companyId: string,
+  systemId: string
+): Promise<any> {
+  return BcApiService.fetchData<any>({
+    url: `/api/hrpsolutions/hrmis/v2.0/languageSkills(${systemId})?Company=${companyId}`,
+    method: "DELETE",
+    headers: {
+      "If-Match": "*",
+    },
+  });
+}

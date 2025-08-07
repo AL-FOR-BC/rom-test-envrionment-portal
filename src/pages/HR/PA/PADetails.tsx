@@ -6,14 +6,18 @@ import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 
 import { useAppSelector } from "../../../store/hook";
+import { useAppSelector as useAppSelectorAuth } from "../../../store/hook";
 import { apiPALInes } from "../../../services/PaServices";
 
 import PerformanceAppraisalLines from "../../../Components/ui/Lines/PerformanceAppraisalLines";
 import { Collapse, Paper, Box, IconButton, Button } from "@mui/material";
+import { Row, Col, Input, Label } from "reactstrap";
 
 import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from "@mui/icons-material/Delete";
 import ModelMui from "../../../Components/ui/ModelMui/ModelMui";
 import React from "react";
+import Swal from "sweetalert2";
 import { useAspirations } from "./hooks/useAspirations";
 import { useQuestionQ1 } from "./hooks/useQuestionQ1";
 import { useQuestionQ2 } from "./hooks/useQuestionQ2";
@@ -23,37 +27,50 @@ import { useLanguageSkills } from "./hooks/useLanguageSkills";
 import { useCareerMoveOptions } from "./hooks/useCareerMoveOptions";
 import { useSkillsWorkCompetencyAreas } from "./hooks/useSkillsWorkCompetencyAreas";
 import { useBehaviorsPersonalStyle } from "./hooks/useBehaviorsPersonalStyle";
+import { useSubordinatesEvaluation } from "./hooks/useSubordinatesEvaluation";
+import { usePeerEvaluation } from "./hooks/usePeerEvaluation";
 import { updateQuestionQ1 } from "../../../services/QuestionQ1Service";
 import {
   updateQuestionQ2,
   createQuestionQ2,
+  deleteQuestionQ2,
 } from "../../../services/QuestionQ2Service";
 import {
   updateAspirations,
   createAspirations,
+  deleteAspirations,
 } from "../../../services/AspirationsService";
 import {
   updateQuestionQ3,
   createQuestionQ3,
+  deleteQuestionQ3,
 } from "../../../services/QuestionQ3Service";
 import { updateMobilityPreference } from "../../../services/MobilityPreferenceService";
 import {
   updateLanguageSkills,
   createLanguageSkills,
+  deleteLanguageSkills,
 } from "../../../services/LanguageSkillsService";
 import {
   updateCareerMoveOptions,
   createCareerMoveOptions,
+  deleteCareerMoveOptions,
 } from "../../../services/CareerMoveOptionsService";
 import { updateSkillsWorkCompetencyAreas } from "../../../services/SkillsWorkCompetencyAreasService";
 import { updateBehaviorsPersonalStyle } from "../../../services/BehaviorsPersonalStyleService";
+import { subordinatesEvaluationService } from "../../../services/SubordinatesEvaluationService";
+// import { peerEvaluationService } from "../../../services/PeerEvaluationService";
 import SectionHeader from "../../../Components/ui/SectionHeader";
 import { getErrorMessage } from "../../../utils/common";
+import { peerEvaluationService } from "../../../services/PeerEvaluationService";
 
 function PADetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { companyId } = useAppSelector((state) => state.auth.session);
+  const { employeeNo: currentUserEmployeeNo } = useAppSelectorAuth(
+    (state) => state.auth.user
+  );
   const [currentUser, setCurrentUser] = useState<"Appraisee" | "Appraiser">(
     "Appraisee"
   );
@@ -65,12 +82,16 @@ function PADetails() {
     deletePA,
     sendPAForApproval,
     sendToAppraiser,
+    sendToHeadOfDepartment,
+    sendBackToAppraisee,
     cancelPAApprovalRequest,
+    handleInputChange,
+    handleFieldUpdate,
   } = usePA({ mode: "detail" });
 
   useEffect(() => {
     const currentUser =
-      formData.appraiser === employeeNo ? "Appraiser" : "Appraisee";
+      formData.appraiser === currentUserEmployeeNo ? "Appraiser" : "Appraisee";
     setCurrentUser(currentUser);
   }, [formData.stage]);
   console.log("formData", formData);
@@ -114,18 +135,8 @@ function PADetails() {
             sort: true,
           },
           {
-            dataField: "appraiseeScore",
-            text: "Appraisee Score",
-            sort: true,
-          },
-          {
             dataField: "appraiserRating",
             text: "Appraiser Rating",
-            sort: true,
-          },
-          {
-            dataField: "agreedScore",
-            text: "Agreed Score",
             sort: true,
           },
           formData.status === "Open" && {
@@ -185,23 +196,11 @@ function PADetails() {
             sort: true,
           },
           {
-            dataField: "appraiseeScore",
-            text: "Appraisee Score",
-            sort: true,
-          },
-          {
             dataField: "appraiserRating",
             text: "Appraiser Rating",
             sort: true,
           },
-          {
-            dataField: "agreedScore",
-            text: "Agreed Score",
-            sort: true,
-          },
         ];
-
- 
 
   const [modalOpen, setModalOpen] = React.useState(false);
   const [modalFields, setModalFields] = React.useState<any[]>([]);
@@ -423,14 +422,26 @@ function PADetails() {
           },
           {
             label: "Proficiency",
-            type: "text",
-            value: row.proficiency || "",
+            type: "select",
+            value: row.proficiency
+              ? {
+                  value: row.proficiency,
+                  label: row.proficiency,
+                }
+              : { value: "", label: "Select proficiency" },
             onChange: (e: any) => {
-              const newValue = e.target ? e.target.value : e;
+              const newValue = e?.value || e;
               handleEditChange("proficiency", newValue);
             },
             id: "proficiency",
             disabled: formData.stage === "Appraisee Rating" ? false : true,
+            options: [
+              { value: "", label: "Select proficiency" },
+              { value: "Native speaker", label: "Native speaker" },
+              { value: "Fluent", label: "Fluent" },
+              { value: "Advanced", label: "Advanced" },
+              { value: "Basic", label: "Basic" },
+            ],
           },
         ];
         break;
@@ -447,19 +458,30 @@ function PADetails() {
               handleEditChange("option", newValue);
             },
             id: "option",
-            disabled: false,
+            disabled: formData.stage !== "Appraisee Rating",
           },
           {
             label: "Possible Timing",
-            type: "textarea",
-            rows: 3,
-            value: row.possibleTiming || "",
+            type: "select",
+            value: row.possibleTiming
+              ? {
+                  value: row.possibleTiming,
+                  label: row.possibleTiming,
+                }
+              : { value: "", label: "Select timing" },
             onChange: (e: any) => {
-              const newValue = e.target ? e.target.value : e;
+              const newValue = e?.value || e;
               handleEditChange("possibleTiming", newValue);
             },
             id: "possibleTiming",
-            disabled: false,
+            disabled: formData.stage !== "Appraisee Rating",
+            options: [
+              { value: "", label: "Select timing" },
+              { value: "0-6 months", label: "0-6 months" },
+              { value: "6-12 months", label: "6-12 months" },
+              { value: "12-18 months", label: "12-18 months" },
+              { value: ">24 months", label: ">24 months" },
+            ],
           },
         ];
         break;
@@ -475,7 +497,10 @@ function PADetails() {
               handleEditChange("description", newValue);
             },
             id: "description",
-            disabled: true,
+            disabled: !(
+              formData.stage === "Appraisee Rating" &&
+              currentUser === "Appraisee"
+            ),
             rows: 3,
           },
           {
@@ -486,9 +511,9 @@ function PADetails() {
                   value: row.essentialOrDesirable,
                   label: row.essentialOrDesirable,
                 }
-              : "",
+              : null,
             onChange: (e: any) => {
-              const newValue = e.target ? e.target.value : e;
+              const newValue = e?.value || e;
               handleEditChange("essentialOrDesirable", newValue);
             },
             id: "essentialOrDesirable",
@@ -534,9 +559,10 @@ function PADetails() {
               handleEditChange("secondView", newValue);
             },
             id: "secondView",
-            disabled:
+            disabled: !(
               formData.stage === "Appraiser Rating" &&
-              currentUser === "Appraisee",
+              currentUser === "Appraiser"
+            ),
             inputProps: {
               max: 10,
               min: 0,
@@ -550,15 +576,16 @@ function PADetails() {
                   value: row.ed,
                   label: row.ed,
                 }
-              : "",
+              : null,
             onChange: (e: any) => {
               const newValue = e?.value || e;
               handleEditChange("ed", newValue);
             },
             id: "ed",
-            disabled:
+            disabled: !(
               formData.stage === "Appraiser Rating" &&
-              currentUser === "Appraisee",
+              currentUser === "Appraiser"
+            ),
             options: [
               {
                 value: "Essential",
@@ -584,7 +611,7 @@ function PADetails() {
               handleEditChange("description", newValue);
             },
             id: "description",
-            disabled: false,
+            disabled: true,
             rows: 3,
           },
           {
@@ -595,9 +622,9 @@ function PADetails() {
                   value: row.essentialOrDesirable,
                   label: row.essentialOrDesirable,
                 }
-              : "",
+              : null,
             onChange: (e: any) => {
-              const newValue = e.target ? e.target.value : e;
+              const newValue = e?.value || e;
               handleEditChange("essentialOrDesirable", newValue);
             },
             id: "essentialOrDesirable",
@@ -643,9 +670,10 @@ function PADetails() {
               handleEditChange("secondView", newValue);
             },
             id: "secondView",
-            disabled:
+            disabled: !(
               formData.stage === "Appraiser Rating" &&
-              currentUser === "Appraisee",
+              currentUser === "Appraiser"
+            ),
             inputProps: {
               max: 10,
               min: 0,
@@ -659,15 +687,16 @@ function PADetails() {
                   value: row.ed,
                   label: row.ed,
                 }
-              : "",
+              : null,
             onChange: (e: any) => {
               const newValue = e?.value || e;
               handleEditChange("ed", newValue);
             },
             id: "ed",
-            disabled:
+            disabled: !(
               formData.stage === "Appraiser Rating" &&
-              currentUser === "Appraisee",
+              currentUser === "Appraiser"
+            ),
             options: [
               {
                 value: "Essential",
@@ -678,6 +707,162 @@ function PADetails() {
                 label: "Desirable",
               },
             ],
+          },
+        ];
+        break;
+      case "subordinatesEvaluation":
+        setModalTitle("Edit Subordinates Evaluation");
+        fields = [
+          {
+            label: "Attribute Code",
+            type: "text",
+            value: row.attributeCode || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("attributeCode", newValue);
+            },
+            id: "attributeCode",
+            disabled: true,
+          },
+          {
+            label: "Key Enabling Attribute",
+            type: "text",
+            value: row.keyEnablingAttribute || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("keyEnablingAttribute", newValue);
+            },
+            id: "keyEnablingAttribute",
+            disabled: true,
+          },
+          {
+            label: "Rating (1-4)",
+            type: "number",
+            value: row.rating || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              if (Number(newValue) > 4 || Number(newValue) < 1) {
+                return;
+              }
+              handleEditChange("rating", newValue);
+            },
+            id: "rating",
+            disabled: !(
+              formData.stage === "Appraiser Rating" &&
+              currentUser === "Appraiser"
+            ),
+            inputProps: {
+              max: 4,
+              min: 1,
+            },
+          },
+          {
+            label: "Comment",
+            type: "textarea",
+            value: row.comment || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("comment", newValue);
+            },
+            id: "comment",
+            disabled: !(
+              formData.stage === "Appraiser Rating" &&
+              currentUser === "Appraiser"
+            ),
+            rows: 3,
+          },
+          {
+            label: "Any Suggestion",
+            type: "textarea",
+            value: row.anySuggestion || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("anySuggestion", newValue);
+            },
+            id: "anySuggestion",
+            disabled: !(
+              formData.stage === "Appraiser Rating" &&
+              currentUser === "Appraiser"
+            ),
+            rows: 3,
+          },
+        ];
+        break;
+      case "peerEvaluation":
+        setModalTitle("Edit Peer Evaluation");
+        fields = [
+          {
+            label: "Attribute Code",
+            type: "text",
+            value: row.attributeCode || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("attributeCode", newValue);
+            },
+            id: "attributeCode",
+            disabled: true,
+          },
+          {
+            label: "Key Enabling Attribute",
+            type: "text",
+            value: row.keyEnablingAttribute || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("keyEnablingAttribute", newValue);
+            },
+            id: "keyEnablingAttribute",
+            disabled: true,
+          },
+          {
+            label: "Rating (1-4)",
+            type: "number",
+            value: row.rating || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              if (Number(newValue) > 4 || Number(newValue) < 1) {
+                return;
+              }
+              handleEditChange("rating", newValue);
+            },
+            id: "rating",
+            disabled: !(
+              formData.stage === "Appraiser Rating" &&
+              currentUser === "Appraiser"
+            ),
+            inputProps: {
+              max: 4,
+              min: 1,
+            },
+          },
+          {
+            label: "Comment",
+            type: "textarea",
+            value: row.comment || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("comment", newValue);
+            },
+            id: "comment",
+            disabled: !(
+              formData.stage === "Appraiser Rating" &&
+              currentUser === "Appraiser"
+            ),
+            rows: 3,
+          },
+          {
+            label: "Any Suggestion",
+            type: "textarea",
+            value: row.anySuggestion || "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("anySuggestion", newValue);
+            },
+            id: "anySuggestion",
+            disabled: !(
+              formData.stage === "Appraiser Rating" &&
+              currentUser === "Appraiser"
+            ),
+            rows: 3,
           },
         ];
         break;
@@ -777,19 +962,6 @@ function PADetails() {
                 currentUser === "Appraisee"),
           },
           {
-            label: "Appraisee Score",
-            type: "number",
-            max: 4,
-            min: 1,
-            value: row.appraiseeScore || "",
-            onChange: (e: any) => {
-              const newValue = e.target ? e.target.value : e;
-              handleEditChange("appraiseeScore", newValue);
-            },
-            id: "appraiseeScore",
-            disabled: true,
-          },
-          {
             label: "Appraiser Rating",
             type: "text",
             value: row.appraiserRating || "",
@@ -800,17 +972,6 @@ function PADetails() {
             id: "appraiserRating",
             disabled: currentUser === "Appraisee",
           },
-          {
-            label: "Agreed Score",
-            type: "number",
-            value: row.agreedScore || "",
-            onChange: (e: any) => {
-              const newValue = e.target ? e.target.value : e;
-              handleEditChange("agreedScore", newValue);
-            },
-            id: "agreedScore",
-            disabled: true,
-          },
         ];
         break;
       default:
@@ -820,6 +981,72 @@ function PADetails() {
 
     setModalFields([fields]);
     setModalOpen(true);
+  };
+
+  const handleDeleteClick = async (row: any, sectionType: string) => {
+    // Only allow delete for Appraisee users and not during Appraiser Rating stage
+    if (currentUser !== "Appraisee") {
+      toast.error("Only Appraisee can delete items");
+      return;
+    }
+
+    if (formData.stage === "Appraiser Rating") {
+      toast.error("Cannot delete items during Appraiser Rating stage");
+      return;
+    }
+
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it!",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        // Handle delete based on section type
+        switch (sectionType) {
+          case "questionQ2":
+            // Delete questionQ2 line
+            await deleteQuestionQ2(companyId, row.systemId);
+            await refreshQuestionQ2();
+            toast.success("Question Q2 deleted successfully");
+            break;
+          case "questionQ3":
+            // Delete questionQ3 line
+            await deleteQuestionQ3(companyId, row.systemId);
+            await refreshQuestionQ3();
+            toast.success("Question Q3 deleted successfully");
+            break;
+          case "aspirations":
+            // Delete aspirations line
+            await deleteAspirations(companyId, row.systemId);
+            await refreshAspirations();
+            toast.success("Aspiration deleted successfully");
+            break;
+          case "languageSkills":
+            // Delete language skills line
+            await deleteLanguageSkills(companyId, row.systemId);
+            await refreshLanguageSkills();
+            toast.success("Language skill deleted successfully");
+            break;
+          case "careerMoveOptions":
+            // Delete career move options line
+            await deleteCareerMoveOptions(companyId, row.systemId);
+            await refreshCareerMoveOptions();
+            toast.success("Career move option deleted successfully");
+            break;
+          default:
+            toast.error("Unknown section type");
+        }
+      } catch (error) {
+        toast.error("Error deleting item");
+        console.error("Delete error:", error);
+      }
+    }
   };
 
   const handleAddNew = (sectionType: string) => {
@@ -1001,14 +1228,21 @@ function PADetails() {
           },
           {
             label: "Proficiency",
-            type: "text",
-            value: "",
+            type: "select",
+            value: { value: "", label: "Select proficiency" },
             onChange: (e: any) => {
-              const newValue = e.target ? e.target.value : e;
+              const newValue = e?.value || e;
               handleEditChange("proficiency", newValue);
             },
             id: "proficiency",
             disabled: false,
+            options: [
+              { value: "", label: "Select proficiency" },
+              { value: "Native speaker", label: "Native speaker" },
+              { value: "Fluent", label: "Fluent" },
+              { value: "Advanced", label: "Advanced" },
+              { value: "Basic", label: "Basic" },
+            ],
           },
         ];
         break;
@@ -1024,18 +1258,153 @@ function PADetails() {
               handleEditChange("option", newValue);
             },
             id: "option",
-            disabled: false,
+            disabled: formData.stage !== "Appraisee Rating",
           },
           {
             label: "Possible Timing",
+            type: "select",
+            value: { value: "", label: "Select timing" },
+            onChange: (e: any) => {
+              const newValue = e?.value || e;
+              handleEditChange("possibleTiming", newValue);
+            },
+            id: "possibleTiming",
+            disabled: formData.stage !== "Appraisee Rating",
+            options: [
+              { value: "", label: "Select timing" },
+              { value: "0-6 months", label: "0-6 months" },
+              { value: "6-12 months", label: "6-12 months" },
+              { value: "12-18 months", label: "12-18 months" },
+              { value: ">24 months", label: ">24 months" },
+            ],
+          },
+        ];
+        break;
+      case "peerEvaluation":
+        setModalTitle("Add New Peer Evaluation");
+        fields = [
+          {
+            label: "Attribute Code",
             type: "text",
             value: "",
             onChange: (e: any) => {
               const newValue = e.target ? e.target.value : e;
-              handleEditChange("possibleTiming", newValue);
+              handleEditChange("attributeCode", newValue);
             },
-            id: "possibleTiming",
+            id: "attributeCode",
             disabled: false,
+          },
+          {
+            label: "Key Enabling Attribute",
+            type: "text",
+            value: "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("keyEnablingAttribute", newValue);
+            },
+            id: "keyEnablingAttribute",
+            disabled: false,
+          },
+          {
+            label: "Rating (1-4)",
+            type: "number",
+            value: "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("rating", newValue);
+            },
+            id: "rating",
+            disabled: formData.stage === "Appraisee Rating" ? false : true,
+            min: 1,
+            max: 4,
+          },
+          {
+            label: "Comment",
+            type: "textarea",
+            value: "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("comment", newValue);
+            },
+            id: "comment",
+            disabled: formData.stage === "Appraisee Rating" ? false : true,
+            rows: 3,
+          },
+          {
+            label: "Any Suggestion",
+            type: "textarea",
+            value: "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("anySuggestion", newValue);
+            },
+            id: "anySuggestion",
+            disabled: formData.stage === "Appraisee Rating" ? false : true,
+            rows: 3,
+          },
+        ];
+        break;
+      case "subordinatesEvaluation":
+        setModalTitle("Add New Subordinates Evaluation");
+        fields = [
+          {
+            label: "Attribute Code",
+            type: "text",
+            value: "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("attributeCode", newValue);
+            },
+            id: "attributeCode",
+            disabled: false,
+          },
+          {
+            label: "Key Enabling Attribute",
+            type: "text",
+            value: "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("keyEnablingAttribute", newValue);
+            },
+            id: "keyEnablingAttribute",
+            disabled: false,
+          },
+          {
+            label: "Rating (1-4)",
+            type: "number",
+            value: "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("rating", newValue);
+            },
+            id: "rating",
+            disabled: formData.stage === "Appraisee Rating" ? false : true,
+            min: 1,
+            max: 4,
+          },
+          {
+            label: "Comment",
+            type: "textarea",
+            value: "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("comment", newValue);
+            },
+            id: "comment",
+            disabled: formData.stage === "Appraisee Rating" ? false : true,
+            rows: 3,
+          },
+          {
+            label: "Any Suggestion",
+            type: "textarea",
+            value: "",
+            onChange: (e: any) => {
+              const newValue = e.target ? e.target.value : e;
+              handleEditChange("anySuggestion", newValue);
+            },
+            id: "anySuggestion",
+            disabled: formData.stage === "Appraisee Rating" ? false : true,
+            rows: 3,
           },
         ];
         break;
@@ -1159,6 +1528,19 @@ function PADetails() {
               dataWithDocumentNo
             );
             break;
+          case "peerEvaluation":
+            response = await peerEvaluationService.createPeerEvaluation(
+              companyId,
+              dataWithDocumentNo
+            );
+            break;
+          case "subordinatesEvaluation":
+            response =
+              await subordinatesEvaluationService.createSubordinatesEvaluation(
+                companyId,
+                dataWithDocumentNo
+              );
+            break;
           default:
             toast.error("Unknown section type for adding");
             return;
@@ -1186,6 +1568,12 @@ function PADetails() {
               break;
             case "careerMoveOptions":
               refreshCareerMoveOptions();
+              break;
+            case "peerEvaluation":
+              refreshPeerEvaluation();
+              break;
+            case "subordinatesEvaluation":
+              refreshSubordinatesEvaluation();
               break;
           }
           handleModalClose();
@@ -1369,6 +1757,35 @@ function PADetails() {
             processedEditData
           );
           break;
+        case "subordinatesEvaluation":
+          // Only include editable fields for subordinates evaluation
+          const subordinatesEvaluationData = {
+            rating: processedEditData.rating,
+            comment: processedEditData.comment,
+            anySuggestion: processedEditData.anySuggestion,
+          };
+          response =
+            await subordinatesEvaluationService.updateSubordinatesEvaluation(
+              companyId,
+              subordinatesEvaluationData,
+              editRow.systemId,
+              editRow["@odata.etag"]
+            );
+          break;
+        case "peerEvaluation":
+          // Only include editable fields for peer evaluation
+          const peerEvaluationData = {
+            rating: processedEditData.rating,
+            comment: processedEditData.comment,
+            anySuggestion: processedEditData.anySuggestion,
+          };
+          response = await peerEvaluationService.updatePeerEvaluation(
+            companyId,
+            peerEvaluationData,
+            editRow.systemId,
+            editRow["@odata.etag"]
+          );
+          break;
         default:
           toast.error("Unknown section type");
           return;
@@ -1409,6 +1826,12 @@ function PADetails() {
           case "behaviorsPersonalStyle":
             refreshBehaviorsPersonalStyle();
             break;
+          case "subordinatesEvaluation":
+            refreshSubordinatesEvaluation();
+            break;
+          case "peerEvaluation":
+            refreshPeerEvaluation();
+            break;
         }
         handleModalClose();
       } else {
@@ -1424,10 +1847,10 @@ function PADetails() {
   const [showQuestionQ1, setShowQuestionQ1] = React.useState(true);
   const [showQuestionQ2, setShowQuestionQ2] = React.useState(true);
   const [showAspirations, setShowAspirations] = React.useState(true);
-  const {
-    data: aspirationsData,
-    refresh: refreshAspirations,
-  } = useAspirations(companyId, formData.no);
+  const { data: aspirationsData, refresh: refreshAspirations } = useAspirations(
+    companyId,
+    formData.no
+  );
   const { data: questionQ1Data, refresh: refreshQuestionQ1 } = useQuestionQ1(
     companyId,
     formData.no
@@ -1448,6 +1871,10 @@ function PADetails() {
     React.useState(true);
   const [showBehaviorsPersonalStyle, setShowBehaviorsPersonalStyle] =
     React.useState(true);
+  const [showSubordinatesEvaluation, setShowSubordinatesEvaluation] =
+    React.useState(true);
+  const [showPeerEvaluation, setShowPeerEvaluation] = React.useState(true);
+  const [showSection3, setShowSection3] = React.useState(true);
 
   const { data: questionQ3Data, refresh: refreshQuestionQ3 } = useQuestionQ3(
     companyId,
@@ -1467,6 +1894,12 @@ function PADetails() {
     data: behaviorsPersonalStyleData,
     refresh: refreshBehaviorsPersonalStyle,
   } = useBehaviorsPersonalStyle(companyId, formData.no);
+  const {
+    data: subordinatesEvaluationData,
+    refresh: refreshSubordinatesEvaluation,
+  } = useSubordinatesEvaluation(companyId, formData.no);
+  const { data: peerEvaluationData, refresh: refreshPeerEvaluation } =
+    usePeerEvaluation(companyId, formData.no);
 
   useEffect(() => {
     if (id) {
@@ -1480,7 +1913,7 @@ function PADetails() {
         title="PA Details"
         subtitle="Performance Appraisal"
         breadcrumbItem="Performance Appraisal"
-        handleBack={() => navigate("/performance-appraisal")}
+        handleBack={() => navigate(-1)}
         handleSubmit={() => {}}
         status={formData.status}
         stage={formData.stage}
@@ -1514,6 +1947,16 @@ function PADetails() {
             sendToAppraiser(id);
           }
         }}
+        handleSendToHeadOfDepartment={() => {
+          if (id) {
+            sendToHeadOfDepartment(id);
+          }
+        }}
+        handleSendBackToAppraisee={() => {
+          if (id) {
+            sendBackToAppraisee(id);
+          }
+        }}
         lines={
           <>
             {/* <Lines
@@ -1532,7 +1975,7 @@ function PADetails() {
 
             <Paper
               sx={{
-                background: "#e9f0fb",
+                background: "transparent",
                 borderRadius: 0,
                 boxShadow: "none",
                 mb: 2,
@@ -1571,7 +2014,7 @@ function PADetails() {
             </Paper>
             <Paper
               sx={{
-                background: "#e9f0fb",
+                background: "transparent",
                 borderRadius: 0,
                 boxShadow: "none",
                 mb: 2,
@@ -1618,7 +2061,7 @@ function PADetails() {
             </Paper>
             <Paper
               sx={{
-                background: "#e9f0fb",
+                background: "transparent",
                 borderRadius: 0,
                 boxShadow: "none",
                 mb: 4,
@@ -1630,14 +2073,17 @@ function PADetails() {
                 open={showQuestionQ2}
                 onToggle={() => setShowQuestionQ2((prev) => !prev)}
                 action={
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => handleAddNew("questionQ2")}
-                    sx={{ mr: 1 }}
-                  >
-                    Add New
-                  </Button>
+                  formData.stage === "Appraisee Rating" &&
+                  currentUser === "Appraisee" ? (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleAddNew("questionQ2")}
+                      sx={{ mr: 1 }}
+                    >
+                      Add New
+                    </Button>
+                  ) : null
                 }
               />
               <Collapse in={showQuestionQ2}>
@@ -1656,15 +2102,29 @@ function PADetails() {
                         dataField: "action",
                         text: "Action",
                         formatter: (_: any, row: any) => (
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditClick(row, "questionQ2")}
-                          >
-                            <EditIcon
-                              fontSize="small"
-                              sx={{ color: "#1976d2" }}
-                            />
-                          </IconButton>
+                          <Box sx={{ display: "flex", gap: 1 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditClick(row, "questionQ2")}
+                            >
+                              <EditIcon
+                                fontSize="small"
+                                sx={{ color: "#1976d2" }}
+                              />
+                            </IconButton>
+                            {currentUser === "Appraisee" &&
+                              formData.stage !== "Appraiser Rating" && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    handleDeleteClick(row, "questionQ2")
+                                  }
+                                  sx={{ color: "#d32f2f" }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                          </Box>
                         ),
                       },
                     ]}
@@ -1676,7 +2136,7 @@ function PADetails() {
             </Paper>
             <Paper
               sx={{
-                background: "#e9f0fb",
+                background: "transparent",
                 borderRadius: 0,
                 boxShadow: "none",
                 mb: 2,
@@ -1688,14 +2148,17 @@ function PADetails() {
                 open={showQuestionQ3}
                 onToggle={() => setShowQuestionQ3((prev) => !prev)}
                 action={
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => handleAddNew("questionQ3")}
-                    sx={{ mr: 1 }}
-                  >
-                    Add New
-                  </Button>
+                  formData.stage === "Appraisee Rating" &&
+                  currentUser === "Appraisee" ? (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleAddNew("questionQ3")}
+                      sx={{ mr: 1 }}
+                    >
+                      Add New
+                    </Button>
+                  ) : null
                 }
               />
               <Collapse in={showQuestionQ3}>
@@ -1715,15 +2178,29 @@ function PADetails() {
                         dataField: "action",
                         text: "Action",
                         formatter: (_: any, row: any) => (
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditClick(row, "questionQ3")}
-                          >
-                            <EditIcon
-                              fontSize="small"
-                              sx={{ color: "#1976d2" }}
-                            />
-                          </IconButton>
+                          <Box sx={{ display: "flex", gap: 1 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleEditClick(row, "questionQ3")}
+                            >
+                              <EditIcon
+                                fontSize="small"
+                                sx={{ color: "#1976d2" }}
+                              />
+                            </IconButton>
+                            {currentUser === "Appraisee" &&
+                              formData.stage !== "Appraiser Rating" && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    handleDeleteClick(row, "questionQ3")
+                                  }
+                                  sx={{ color: "#d32f2f" }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                          </Box>
                         ),
                       },
                     ]}
@@ -1735,7 +2212,7 @@ function PADetails() {
             </Paper>
             <Paper
               sx={{
-                background: "#e9f0fb",
+                background: "transparent",
                 borderRadius: 0,
                 boxShadow: "none",
                 mb: 2,
@@ -1747,14 +2224,17 @@ function PADetails() {
                 open={showAspirations}
                 onToggle={() => setShowAspirations((prev) => !prev)}
                 action={
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => handleAddNew("aspirations")}
-                    sx={{ mr: 1 }}
-                  >
-                    Add New
-                  </Button>
+                  formData.stage === "Appraisee Rating" &&
+                  currentUser === "Appraisee" ? (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleAddNew("aspirations")}
+                      sx={{ mr: 1 }}
+                    >
+                      Add New
+                    </Button>
+                  ) : null
                 }
               />
               <Collapse in={showAspirations}>
@@ -1777,15 +2257,31 @@ function PADetails() {
                         dataField: "action",
                         text: "Action",
                         formatter: (_: any, row: any) => (
-                          <IconButton
-                            size="small"
-                            onClick={() => handleEditClick(row, "aspirations")}
-                          >
-                            <EditIcon
-                              fontSize="small"
-                              sx={{ color: "#1976d2" }}
-                            />
-                          </IconButton>
+                          <Box sx={{ display: "flex", gap: 1 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleEditClick(row, "aspirations")
+                              }
+                            >
+                              <EditIcon
+                                fontSize="small"
+                                sx={{ color: "#1976d2" }}
+                              />
+                            </IconButton>
+                            {currentUser === "Appraisee" &&
+                              formData.stage !== "Appraiser Rating" && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    handleDeleteClick(row, "aspirations")
+                                  }
+                                  sx={{ color: "#d32f2f" }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                          </Box>
                         ),
                       },
                     ]}
@@ -1843,7 +2339,7 @@ function PADetails() {
             </Paper>
             <Paper
               sx={{
-                background: "#e9f0fb",
+                background: "transparent",
                 borderRadius: 0,
                 boxShadow: "none",
                 mb: 2,
@@ -1855,14 +2351,17 @@ function PADetails() {
                 open={showLanguageSkills}
                 onToggle={() => setShowLanguageSkills((prev) => !prev)}
                 action={
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => handleAddNew("languageSkills")}
-                    sx={{ mr: 1 }}
-                  >
-                    Add New
-                  </Button>
+                  formData.stage === "Appraisee Rating" &&
+                  currentUser === "Appraisee" ? (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleAddNew("languageSkills")}
+                      sx={{ mr: 1 }}
+                    >
+                      Add New
+                    </Button>
+                  ) : null
                 }
               />
               <Collapse in={showLanguageSkills}>
@@ -1880,17 +2379,31 @@ function PADetails() {
                         dataField: "action",
                         text: "Action",
                         formatter: (_: any, row: any) => (
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              handleEditClick(row, "languageSkills")
-                            }
-                          >
-                            <EditIcon
-                              fontSize="small"
-                              sx={{ color: "#1976d2" }}
-                            />
-                          </IconButton>
+                          <Box sx={{ display: "flex", gap: 1 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleEditClick(row, "languageSkills")
+                              }
+                            >
+                              <EditIcon
+                                fontSize="small"
+                                sx={{ color: "#1976d2" }}
+                              />
+                            </IconButton>
+                            {currentUser === "Appraisee" &&
+                              formData.stage !== "Appraiser Rating" && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    handleDeleteClick(row, "languageSkills")
+                                  }
+                                  sx={{ color: "#d32f2f" }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                          </Box>
                         ),
                       },
                     ]}
@@ -1902,7 +2415,7 @@ function PADetails() {
             </Paper>
             <Paper
               sx={{
-                background: "#e9f0fb",
+                background: "transparent",
                 borderRadius: 0,
                 boxShadow: "none",
                 mb: 2,
@@ -1914,14 +2427,17 @@ function PADetails() {
                 open={showCareerMoveOptions}
                 onToggle={() => setShowCareerMoveOptions((prev) => !prev)}
                 action={
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => handleAddNew("careerMoveOptions")}
-                    sx={{ mr: 1 }}
-                  >
-                    Add New
-                  </Button>
+                  formData.stage === "Appraisee Rating" &&
+                  currentUser === "Appraisee" ? (
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleAddNew("careerMoveOptions")}
+                      sx={{ mr: 1 }}
+                    >
+                      Add New
+                    </Button>
+                  ) : null
                 }
               />
               <Collapse in={showCareerMoveOptions}>
@@ -1939,17 +2455,31 @@ function PADetails() {
                         dataField: "action",
                         text: "Action",
                         formatter: (_: any, row: any) => (
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              handleEditClick(row, "careerMoveOptions")
-                            }
-                          >
-                            <EditIcon
-                              fontSize="small"
-                              sx={{ color: "#1976d2" }}
-                            />
-                          </IconButton>
+                          <Box sx={{ display: "flex", gap: 1 }}>
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleEditClick(row, "careerMoveOptions")
+                              }
+                            >
+                              <EditIcon
+                                fontSize="small"
+                                sx={{ color: "#1976d2" }}
+                              />
+                            </IconButton>
+                            {currentUser === "Appraisee" &&
+                              formData.stage !== "Appraiser Rating" && (
+                                <IconButton
+                                  size="small"
+                                  onClick={() =>
+                                    handleDeleteClick(row, "careerMoveOptions")
+                                  }
+                                  sx={{ color: "#d32f2f" }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              )}
+                          </Box>
                         ),
                       },
                     ]}
@@ -1961,7 +2491,7 @@ function PADetails() {
             </Paper>
             <Paper
               sx={{
-                background: "#e9f0fb",
+                background: "transparent",
                 borderRadius: 0,
                 boxShadow: "none",
                 mb: 2,
@@ -2027,7 +2557,7 @@ function PADetails() {
             </Paper>
             <Paper
               sx={{
-                background: "#e9f0fb",
+                background: "transparent",
                 borderRadius: 0,
                 boxShadow: "none",
                 mb: 2,
@@ -2086,6 +2616,257 @@ function PADetails() {
                     status={formData.status || ""}
                     mode="questionQ2"
                   />
+                </Box>
+              </Collapse>
+            </Paper>
+            <Paper
+              sx={{
+                background: "transparent",
+                borderRadius: 0,
+                boxShadow: "none",
+                mb: 2,
+                p: 0,
+              }}
+            >
+              <SectionHeader
+                title="Section H: Subordinates Evaluation"
+                open={showSubordinatesEvaluation}
+                onToggle={() => setShowSubordinatesEvaluation((prev) => !prev)}
+              />
+              <Collapse in={showSubordinatesEvaluation}>
+                <Box px={0} pb={2}>
+                  <PerformanceAppraisalLines
+                    lines={subordinatesEvaluationData}
+                    columns={[
+                      {
+                        dataField: "attributeCode",
+                        text: "Attribute Code",
+                        sort: true,
+                      },
+                      {
+                        dataField: "keyEnablingAttribute",
+                        text: "Key Enabling Attribute",
+                        sort: true,
+                      },
+                      {
+                        dataField: "rating",
+                        text: "Rating (1-4)",
+                        sort: true,
+                      },
+                      {
+                        dataField: "comment",
+                        text: "Comment",
+                        sort: true,
+                      },
+                      {
+                        dataField: "anySuggestion",
+                        text: "Any Suggestion",
+                        sort: true,
+                      },
+                      {
+                        dataField: "action",
+                        text: "Action",
+                        formatter: (_: any, row: any) => (
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              handleEditClick(row, "subordinatesEvaluation")
+                            }
+                          >
+                            <EditIcon
+                              fontSize="small"
+                              sx={{ color: "#1976d2" }}
+                            />
+                          </IconButton>
+                        ),
+                      },
+                    ]}
+                    status={formData.status || ""}
+                    mode="questionQ2"
+                  />
+                </Box>
+              </Collapse>
+            </Paper>
+            <Paper
+              sx={{
+                background: "transparent",
+                borderRadius: 0,
+                boxShadow: "none",
+                mb: 2,
+                p: 0,
+              }}
+            >
+              <SectionHeader
+                title="Section I: Peer Evaluation"
+                open={showPeerEvaluation}
+                onToggle={() => setShowPeerEvaluation((prev) => !prev)}
+              />
+              <Collapse in={showPeerEvaluation}>
+                <Box px={0} pb={2}>
+                  <PerformanceAppraisalLines
+                    lines={peerEvaluationData || []}
+                    columns={[
+                      {
+                        dataField: "attributeCode",
+                        text: "Attribute Code",
+                        sort: true,
+                      },
+                      {
+                        dataField: "keyEnablingAttribute",
+                        text: "Key Enabling Attribute",
+                        sort: true,
+                      },
+                      {
+                        dataField: "rating",
+                        text: "Rating (1-4)",
+                        sort: true,
+                      },
+                      {
+                        dataField: "comment",
+                        text: "Comment",
+                        sort: true,
+                      },
+                      {
+                        dataField: "anySuggestion",
+                        text: "Any Suggestion",
+                        sort: true,
+                      },
+                      {
+                        dataField: "action",
+                        text: "Action",
+                        formatter: (_: any, row: any) => (
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              handleEditClick(row, "peerEvaluation")
+                            }
+                          >
+                            <EditIcon
+                              fontSize="small"
+                              sx={{ color: "#1976d2" }}
+                            />
+                          </IconButton>
+                        ),
+                      },
+                    ]}
+                    status={formData.status || ""}
+                    mode="questionQ2"
+                  />
+                </Box>
+              </Collapse>
+            </Paper>
+            <Paper
+              sx={{
+                background: "transparent",
+                borderRadius: 0,
+                boxShadow: "none",
+                mb: 2,
+                p: 0,
+              }}
+            >
+              <SectionHeader
+                title="Section 3: Comments and Action Points"
+                open={showSection3}
+                onToggle={() => setShowSection3((prev) => !prev)}
+              />
+              <Collapse in={showSection3}>
+                <Box px={0} pb={2}>
+                  <Row>
+                    <Col sm={6}>
+                      <Label htmlFor="employeeComments">
+                        Employee's Comments
+                      </Label>
+                      <Input
+                        type="textarea"
+                        rows={4}
+                        value={formData.employeeComments || ""}
+                        onChange={(e) => {
+                          // Update local state only
+                          handleFieldUpdate("employeeComments", e.target.value);
+                        }}
+                        onBlur={(e) => {
+                          handleInputChange("employeeComments", e.target.value);
+                        }}
+                        disabled={formData.stage !== "Appraisee Rating"}
+                        id="employeeComments"
+                      />
+                    </Col>
+                    <Col sm={6}>
+                      <Label htmlFor="lineManagerComments">
+                        Line Manager's Comments
+                      </Label>
+                      <Input
+                        type="textarea"
+                        rows={4}
+                        value={formData.lineManagerComments || ""}
+                        onChange={(e) => {
+                          // Update local state only
+                          handleFieldUpdate(
+                            "lineManagerComments",
+                            e.target.value
+                          );
+                        }}
+                        onBlur={(e) => {
+                          handleInputChange(
+                            "lineManagerComments",
+                            e.target.value
+                          );
+                        }}
+                        disabled={
+                          formData.stage !== "Appraiser Rating" ||
+                          currentUser !== "Appraiser"
+                        }
+                        id="lineManagerComments"
+                      />
+                    </Col>
+                    <Col sm={6}>
+                      <Label htmlFor="headOfDepartmentComments">
+                        Head of Department Comments
+                      </Label>
+                      <Input
+                        type="textarea"
+                        rows={4}
+                        value={formData.headOfDepartmentComments || ""}
+                        onChange={(e) => {
+                          // Update local state only
+                          handleFieldUpdate(
+                            "headOfDepartmentComments",
+                            e.target.value
+                          );
+                        }}
+                        onBlur={(e) => {
+                          handleInputChange(
+                            "headOfDepartmentComments",
+                            e.target.value
+                          );
+                        }}
+                        disabled={
+                          formData.stage !== "Head of Department Review"
+                        }
+                        id="headOfDepartmentComments"
+                      />
+                    </Col>
+                    <Col sm={6}>
+                      <Label htmlFor="hrActionPoint">HR Action Point</Label>
+                      <Input
+                        type="textarea"
+                        rows={4}
+                        value={formData.hrActionPoint || ""}
+                        onChange={(e) => {
+                          // Update local state only
+                          handleFieldUpdate("hrActionPoint", e.target.value);
+                        }}
+                        onBlur={(e) => {
+                          handleInputChange("hrActionPoint", e.target.value);
+                        }}
+                        disabled={
+                          formData.stage !== "Appraiser Rating" ||
+                          currentUser !== "Appraiser"
+                        }
+                        id="hrActionPoint"
+                      />
+                    </Col>
+                  </Row>
                 </Box>
               </Collapse>
             </Paper>

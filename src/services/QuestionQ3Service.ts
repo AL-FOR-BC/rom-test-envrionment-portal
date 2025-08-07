@@ -38,3 +38,13 @@ export async function createQuestionQ3(
     data,
   });
 }
+
+export async function deleteQuestionQ3(
+  companyId: string,
+  systemId: string
+): Promise<any> {
+  return BcApiService.fetchData<any>({
+    url: `/api/hrpsolutions/hrmis/v2.0/questionQ3(${systemId})?Company=${companyId}`,
+    method: "DELETE",
+  });
+}

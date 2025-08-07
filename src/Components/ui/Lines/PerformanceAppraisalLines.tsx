@@ -78,11 +78,8 @@ const PerformanceAppraisalLines: React.FC<PerformanceAppraisalLinesProps> = ({
   // Use external expanded rows if provided, otherwise use internal state
   const expandedRows = externalExpandedRows || internalExpandedRows;
 
-  const [editRow, setEditRow] = React.useState<any | null>(null);
-  const [editData, setEditData] = React.useState<any>({});
   const [modalOpen, setModalOpen] = React.useState(false);
   const [modalFields, setModalFields] = React.useState<any[]>([]);
-  console.log(editData, editRow);
   const handleRowToggle = (rowIndex: number) => {
     if (onToggleExpansion) {
       // Use external toggle function
@@ -100,9 +97,6 @@ const PerformanceAppraisalLines: React.FC<PerformanceAppraisalLinesProps> = ({
   };
 
   const handleEditClick = (row: any) => {
-    setEditRow(row);
-    setEditData({ ...row });
-
     // Prepare fields for ModelMui
     const fields = allColumns
       .filter((col) => col.dataField !== "action")
@@ -121,12 +115,9 @@ const PerformanceAppraisalLines: React.FC<PerformanceAppraisalLinesProps> = ({
 
   const handleModalClose = () => {
     setModalOpen(false);
-    setEditRow(null);
   };
 
   const handleEditChange = (fieldName: string, value: string) => {
-    setEditData((prev: any) => ({ ...prev, [fieldName]: value }));
-
     // Update modalFields with the new value
     setModalFields((prev) =>
       prev.map((row) =>
@@ -140,7 +131,6 @@ const PerformanceAppraisalLines: React.FC<PerformanceAppraisalLinesProps> = ({
   const handleEditSave = () => {
     // For now, just close the modal. You can wire up API save logic here.
     setModalOpen(false);
-    setEditRow(null);
   };
 
   // No pagination needed since TablePagination was removed

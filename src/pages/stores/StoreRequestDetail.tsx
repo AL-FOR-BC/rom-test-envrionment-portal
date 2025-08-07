@@ -31,6 +31,7 @@ import {
 } from "../../store/slices/Requisitions";
 import { FormValidator } from "../../utils/hooks/validation";
 import { useLineOperations } from "../../utils/hooks/useLineOperations";
+import { environmentType } from "../../configs/navigation.config/app.config";
 
 function StoreRequestDetail() {
   const navigate = useNavigate();
@@ -102,7 +103,7 @@ function StoreRequestDetail() {
         id: "empName",
       },
       {
-        label: "Project Code",
+        label: environmentType === "HRP" ? "Department" : "Project Code",
         type: "select",
         value: selectedDimension,
         disabled: status === "Open" ? false : true,

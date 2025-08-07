@@ -12,6 +12,7 @@ function IPADetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { companyId } = useAppSelector((state) => state.auth.session);
+  const { employeeNo } = useAppSelector((state) => state.auth.user);
 
   const {
     formData,
@@ -26,6 +27,7 @@ function IPADetails() {
     updateIPALines,
     sendIPAForApproval,
     cancelIPAApprovalRequest,
+    convertToPerformanceAppraisal,
   } = useIPA({ mode: "detail" });
 
   const columns =
@@ -116,8 +118,16 @@ function IPADetails() {
       breadcrumbItem="Individual Performance Agreement"
       handleBack={() => navigate("/individual-performance-appraisal")}
       handleSubmit={() => {}}
+      currentUser={
+        formData.appraiser === employeeNo ? "Appraiser" : "Appraisee"
+      }
+      handleConvertToPerformanceAppraisal={() => {
+        if (id) {
+          convertToPerformanceAppraisal();
+        }
+      }}
       status={formData.status}
-      stage="Individual Performance Agreement"
+      stage={formData.stage}
       isLoading={false}
       tableId={50451}
       companyId={companyId}

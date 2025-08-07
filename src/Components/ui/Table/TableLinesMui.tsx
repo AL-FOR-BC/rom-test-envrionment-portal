@@ -145,11 +145,15 @@ const CollapsibleRow = ({
           <StyledTableCell key={colIndex}>
             {colIndex === 0 && (
               <span
+                onClick={onToggle}
                 style={{
                   marginRight: "8px",
                   color: "#1976d2",
                   fontSize: "0.75rem",
+                  cursor: "pointer",
+                  userSelect: "none",
                 }}
+                title="Click to expand/collapse"
               >
                 {isExpanded ? "▼" : "▶"}
               </span>
@@ -332,31 +336,6 @@ const CollapsibleRow = ({
                         >
                           <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
                             {row.byWhichTargetDate || "Not specified"}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid item xs={12} sm={6} md={4}>
-                        <Typography
-                          variant="subtitle2"
-                          color="textSecondary"
-                          gutterBottom
-                          sx={{ fontWeight: 600, color: "#555" }}
-                        >
-                          Target Value
-                        </Typography>
-                        <Box
-                          sx={{
-                            backgroundColor: "#f8f9fa",
-                            padding: 2,
-                            borderRadius: 1.5,
-                            minHeight: "60px",
-                            border: "1px solid #e9ecef",
-                            display: "flex",
-                            alignItems: "center",
-                          }}
-                        >
-                          <Typography variant="body2" sx={{ lineHeight: 1.5 }}>
-                            {row.targetValue || "Not specified"}
                           </Typography>
                         </Box>
                       </Grid>

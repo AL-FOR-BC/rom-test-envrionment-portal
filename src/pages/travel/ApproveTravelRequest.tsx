@@ -5,9 +5,14 @@ import { toast } from "react-toastify";
 import { getErrorMessage } from "../../utils/common";
 import HeaderMui from "../../Components/ui/Header/HeaderMui";
 import Lines from "../../Components/ui/Lines/Lines";
-import { apiDimensionValue, apiEmployees, apiWorkPlans } from "../../services/CommonServices";
+import {
+  apiDimensionValue,
+  apiEmployees,
+  apiWorkPlans,
+} from "../../services/CommonServices";
 import { numberFormatter } from "../../Components/ui/Table/TableUtils";
 import { apiTravelRequestDetail } from "../../services/TravelRequestsService";
+import { environmentType } from "../../configs/navigation.config/app.config";
 
 function ApproveTravelRequest() {
   const navigate = useNavigate();
@@ -69,7 +74,7 @@ function ApproveTravelRequest() {
     ],
     [
       {
-        label: "Project Code",
+        label: environmentType === "HRP" ? "Department" : "Project Code",
         type: "text",
         value: selectedDimension,
         disabled: true,
@@ -200,16 +205,15 @@ function ApproveTravelRequest() {
     try {
       setIsLoading(true);
       if (documentNo) {
-   
-          const filterQuery = `$expand=travelRequisitionLines&$filter=no eq '${documentNo}'`;
-          const res = await apiTravelRequestDetail(
-            companyId,
+        const filterQuery = `$expand=travelRequisitionLines&$filter=no eq '${documentNo}'`;
+        const res = await apiTravelRequestDetail(
+          companyId,
           undefined,
           filterQuery,
           documentNo
         );
 
-        const response = res.data.value[0]
+        const response = res.data.value[0];
         if (response) {
           console.log("liness", response.travelRequisitionLines);
           setRequestNo(response.no);
@@ -221,7 +225,7 @@ function ApproveTravelRequest() {
           setSelectedPaymentCategory(response.paymentCategory);
           setSelectedSubCategory(response.paySubcategory);
           setBudgetCode(response.budgetCode);
-         
+
           setRequestorNo(response.requisitionedBy);
           setRequestorName(response.requisitionedBy);
           setTravelRequisitionLines(response.travelRequisitionLines);
@@ -257,8 +261,6 @@ function ApproveTravelRequest() {
               setSelectedDelegatee(`${e.No}::${e.FirstName} ${e.LastName}`);
             }
           });
-
-
         }
       }
     } catch (error) {
