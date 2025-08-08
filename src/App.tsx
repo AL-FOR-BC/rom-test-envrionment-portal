@@ -14,6 +14,7 @@ import { AuthenticationResult } from "@azure/msal-browser";
 import { environmentType } from "./configs/navigation.config/app.config.ts";
 import { IdleTimerContainer } from "./Components/ui/Model/IdleTimerContainer.tsx";
 import { initializeTheme } from "./utils/themeUtils";
+import { logEnvironmentVariables } from "./utils/envUtils";
 
 const pca = new PublicClientApplication({
   auth: {
@@ -82,6 +83,7 @@ function App() {
   // Initialize theme on app startup
   React.useEffect(() => {
     initializeTheme();
+    // logEnvironmentVariables();
   }, []);
 
   return (

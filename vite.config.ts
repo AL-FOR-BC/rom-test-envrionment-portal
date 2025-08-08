@@ -1,54 +1,30 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
+console.log("process.env.ENVIRONMENT_TYPE", process.env.ENVIRONMENT_TYPE);
 // https://vitejs.dev/config/
 export default defineConfig({
-  base:
-    process.env.ENVIRONMENT_TYPE === "ROM_TEST" ||
-    process.env.ENVIRONMENT_TYPE === "ROM"
-      ? "/rom/"
-      : "/",
+  base: "/rom/",
   plugins: [react()],
   define: {
-    "import.meta.env.ENVIRONMENT": JSON.stringify(
-      process.env.ENVIRONMENT || "development"
-    ),
-    "import.meta.env.ENVIRONMENT_TYPE": JSON.stringify(
-      process.env.ENVIRONMENT_TYPE || "HRP"
-    ),
+    "import.meta.env.ENVIRONMENT": JSON.stringify("development"),
+    "import.meta.env.ENVIRONMENT_TYPE": JSON.stringify("ROM_TEST"),
     // "import.meta.env.ENVIRONMENT_TYPE": JSON.stringify("HRP"),
 
     "import.meta.env": JSON.stringify(process.env),
-    "import.meta.env.VITE_EHUB_BACKEND_URL": JSON.stringify(
-      process.env.VITE_EHUB_BACKEND_URL || "http://51.8.80.47:5001"
-    ),
-    "import.meta.env.VITE_EHUB_BC_URL": JSON.stringify(
-      process.env.VITE_EHUB_BC_URL ||
-        "https://api.businesscentral.dynamics.com/v2.0/24528e89-fa53-4fc5-9847-429bb50802ff/ROMProduction/"
-    ),
+    "import.meta.env.VITE_EHUB_BACKEND_URL": JSON.stringify("http://51.8.80.47:5001"),
+    "import.meta.env.VITE_EHUB_BC_URL": JSON.stringify("https://api.businesscentral.dynamics.com/v2.0/24528e89-fa53-4fc5-9847-429bb50802ff/ROMProduction/"),
 
     // ---------------------------------- HRP ----------------------------------
 
-    "import.meta.env.VITE_EHUB_BACKEND_URL_HRP": JSON.stringify(
-      process.env.VITE_EHUB_BACKEND_URL_HRP ||
-        "https://demo-portal-backend-h13a.onrender.com/"
-    ),
-    "import.meta.env.VITE_EHUB_BC_URL_HRP": JSON.stringify(
-      process.env.VITE_EHUB_BC_URL_HRP ||
-        "https://api.businesscentral.dynamics.com/v2.0/df78e20f-3ca1-4018-9157-8bedb2673da2/HRPSandbox4Demos/"
-    ),
+    "import.meta.env.VITE_EHUB_BACKEND_URL_HRP": JSON.stringify("https://demo-portal-backend-h13a.onrender.com/"),
+    "import.meta.env.VITE_EHUB_BC_URL_HRP": JSON.stringify("https://api.businesscentral.dynamics.com/v2.0/df78e20f-3ca1-4018-9157-8bedb2673da2/HRPSandbox4Demos/"),
 
     // ---------------------------------- End of HRP ----------------------------------
 
     // ---------------------------------- ROM TEST ------------------------------------
-    "import.meta.env.VITE_EHUB_BC_URL_ROM": JSON.stringify(
-      process.env.VITE_EHUB_BC_URL_ROM ||
-        "https://api.businesscentral.dynamics.com/v2.0/24528e89-fa53-4fc5-9847-429bb50802ff/ROMProductionCopy2/"
-      // "https://api.businesscentral.dynamics.com/v2.0/24528e89-fa53-4fc5-9847-429bb50802ff/ROMProduction/"
-    ),
-    "import.meta.env.VITE_EHUB_BACKEND_URL_ROM": JSON.stringify(
-      process.env.VITE_EHUB_BACKEND_URL_ROM || "http://51.8.80.47:5001"
-    ),
+    "import.meta.env.VITE_EHUB_BC_URL_ROM": JSON.stringify("https://api.businesscentral.dynamics.com/v2.0/24528e89-fa53-4fc5-9847-429bb50802ff/ROMProductionCopy2/"),
+    "import.meta.env.VITE_EHUB_BACKEND_URL_ROM": JSON.stringify("http://51.8.80.47:5001"),
     // ---------------------------------- End of ROM TEST ------------------------------------
   },
   build: {
