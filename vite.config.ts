@@ -4,7 +4,7 @@ import react from "@vitejs/plugin-react";
 console.log("process.env.ENVIRONMENT_TYPE", process.env.ENVIRONMENT_TYPE);
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: "/rom/",
+  base: "/",
   plugins: [react()],
   define: {
     "import.meta.env.ENVIRONMENT": JSON.stringify("development"),

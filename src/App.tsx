@@ -89,7 +89,7 @@ function App() {
   return (
     <Provider store={store}>
       <MsalProvider instance={pca}>
-        <BrowserRouter basename={environmentType === "HRP" ? "/" : "/rom"}>
+        <BrowserRouter basename={environmentType === "HRP" || environmentType === "ROM_TEST" ? "/" : "/rom"}>
           <IdleTimerContainer />
           <ToastContainer theme="colored" />
           <Layout />
